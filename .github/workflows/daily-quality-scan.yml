@@ -1,0 +1,154 @@
+name: Daily Repo Quality
+
+on:
+  schedule:
+    # GitHub cron is UTC. 01:00 UTC = 09:00 Asia/Shanghai.
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Scan scope: 'incremental' (last 24h diff) or 'full' (whole repo)"
+        required: false
+        default: "incremental"
+        type: choice
+        options:
+          - incremental
+          - full
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: daily-quality-scan
+  cancel-in-progress: false
+
+jobs:
+  quality-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SCOPE: ${{ github.event.inputs.scope || 'incremental' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare scan output dir
+        run: mkdir -p .scan
+
+      - name: Compute changed files (last 24h)
+        id: changed
+        run: |
+          if [ "$SCOPE" = "full" ]; then
+            git ls-files '*.ts' '*.tsx' '*.js' '*.mjs' '*.cjs' > .scan/changed.txt
+          else
+            git log --since="24 hours ago" --name-only --pretty=format: \
+              | sort -u \
+              | grep -E '\.(ts|tsx|js|mjs|cjs)$' \
+              | grep -v '^$' > .scan/changed.txt || true
+          fi
+          echo "count=$(wc -l < .scan/changed.txt)" >> "$GITHUB_OUTPUT"
+          echo "Files in scope:"
+          cat .scan/changed.txt || true
+
+      - name: Typecheck
+        run: pnpm typecheck 2>&1 | tee .scan/typecheck.log
+        continue-on-error: true
+
+      - name: Lint (JSON)
+        # next lint forwards flags to eslint; JSON output is machine-readable for Claude.
+        run: pnpm lint -- --format json --output-file .scan/eslint.json || true
+
+      - name: Semgrep (security + correctness)
+        run: |
+          python3 -m pip install --quiet semgrep
+          # Limit to the languages we ship; auto rules cover OWASP-ish patterns.
+          semgrep scan \
+            --config=auto \
+            --json \
+            --output .scan/semgrep.json \
+            --error --no-error \
+            --include '*.ts' --include '*.tsx' --include '*.js' --include '*.mjs' --include '*.cjs' \
+            || true
+
+      - name: Snapshot recent commits
+        run: |
+          git log --since="24 hours ago" --pretty=format:'%h %an %s' > .scan/commits.txt || true
+          echo "" >> .scan/commits.txt
+
+      - name: Claude triage + daily report
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Use Opus for the deeper triage reasoning; cap turns + budget so a runaway loop can't bleed.
+          claude_args: |
+            --max-turns 15
+            --model claude-opus-4-7
+            --max-budget-usd 5
+            --append-system-prompt "You are a quality architect assistant for the Lucid Terminal repo (Next.js 14 + TS + Zustand + @anthropic-ai/claude-agent-sdk). Report real issues only — never modify code. Honor the conventions in CLAUDE.md (gestures over clicks, design tokens only, no emoji, etc.) when judging severity."
+          prompt: |
+            Scope for this run: ${{ env.SCOPE }} (changed file count: ${{ steps.changed.outputs.count }}).
+
+            Inputs (read from the working tree):
+              - .scan/changed.txt    files changed in the last 24h (or full list for 'full' scope)
+              - .scan/commits.txt    commit log for the same window
+              - .scan/typecheck.log  output of `pnpm typecheck`
+              - .scan/eslint.json    ESLint JSON report
+              - .scan/semgrep.json   Semgrep JSON report
+              - CLAUDE.md            project conventions (use as the rubric for non-functional issues)
+
+            Do the following, in order:
+
+            1. Read every input above. If a file is missing or empty, note it and continue.
+            2. Restrict your analysis to findings that touch files in .scan/changed.txt
+               (unless scope == 'full'). Drop noise from generated files, .next/, node_modules/,
+               and demo-repos/.
+            3. For each remaining finding: classify severity (P0 / P1 / P2),
+               flag obvious false positives, group duplicates, and add a one-line
+               root-cause hypothesis. Cross-reference related findings across files.
+            4. Surface concerns the static tools cannot see: violations of the
+               conventions in CLAUDE.md (e.g. onMouseDown instead of onPointerDown,
+               hardcoded hex colors, emoji, raw `useSessions` access where a
+               selector helper exists, agent-loop changes that break the symmetric
+               event mapping between `app/api/agent/run/route.ts` and `lib/agent-runner.ts`).
+            5. Produce a single Markdown report titled
+               `Daily Quality Report — <today's UTC date>`. Sections:
+                 - Summary (counts by severity, scope, notable diffs)
+                 - P0 / P1 / P2 tables (file:line · rule · why it matters · suggested fix)
+                 - Convention drift (CLAUDE.md-based)
+                 - Dropped as false positive (one-liners only)
+            6. File the report as a GitHub issue in this repository using the
+               available GitHub MCP tools. Title: the report's H1. Labels:
+               `quality-report`, plus `p0` if any P0 items exist. If a report
+               issue with the same title already exists for today, update its
+               body instead of opening a duplicate.
+            7. If there are zero findings after triage, still file the issue
+               with body "No actionable findings for <date>." so the schedule
+               is auditable.
+
+            Do not write to source files. Do not open PRs. Do not @-mention users.
+
+      - name: Upload raw scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-${{ github.run_id }}
+          path: .scan/
+          retention-days: 14
