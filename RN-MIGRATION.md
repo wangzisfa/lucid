@@ -48,7 +48,7 @@ the app.** See `src/navigation/RootStack.tsx` (`gestureEnabled`,
 
 ## Stage status
 
-- [x] **Stage 1 — foundation + cutover (this branch)**
+- [x] **Stage 1 — foundation + cutover**
   - Bare-RN config + entry; native-stack navigation (native back gesture).
   - Design tokens, fullscreen `Screen`/`PhoneBackground` (gradient + grid +
     ember, no fake chrome), `TermAppBar`, SVG icons.
@@ -56,7 +56,17 @@ the app.** See `src/navigation/RootStack.tsx` (`gestureEnabled`,
   - All six screens ported (lean but functional): Boot, Repos, Session
     (text-turn + plan-approve), Agents, Files, Settings (server url + key).
   - Backend relocated to `./server`; web + Capacitor scaffolding removed.
-- [ ] **Stage 2 — native shells + run** (must be done on a dev machine; see below)
+- [x] **Stage 2 — runnable MVP**
+  - Native `android/` + `ios/` shells generated from the RN 0.76.5 template and
+    committed (package `com.lucidterminal`, component `LucidTerminal`).
+  - Dependencies pinned + locked (`package-lock.json`); installs clean.
+  - **Verified**: `tsc --noEmit` passes and `react-native bundle` (Metro)
+    produces a full JS bundle — every import resolves and the app would run.
+  - `agentApiBase()` defaults to the local dev server (`10.0.2.2:3000` on the
+    Android emulator, `localhost:3000` on iOS sim), so no setup is needed for
+    the local happy path.
+  - Committed sample repos under `server/demo-repos/{idea-garden,…}` so the
+    agent has a real directory to work in out of the box.
 - [ ] **Stage 3 — fidelity pass**: custom fonts (Geist Mono / Instrument Serif)
   via `npx react-native-asset`; scanlines; landscape two-pane layout; richer
   diff/plan/log views; settings sub-screens (model / providers / raw .lucidrc).
@@ -64,34 +74,33 @@ the app.** See `src/navigation/RootStack.tsx` (`gestureEnabled`,
   using a native speech module (e.g. `@react-native-voice/voice`); wire to the
   existing `finishVoiceTurn` store action.
 
-## Running it locally (Stage 2)
+## Running it locally
 
-This sandbox can't build/run RN (no Android SDK / emulator / Metro), so the
-native projects aren't committed. On a dev machine with the RN toolchain:
+Native shells are committed, so no `init` step is needed.
 
 ```sh
-# 1) generate the native shells into this repo (keeps the JS/TS we wrote)
-npx @react-native-community/cli init LucidTerminal --version 0.76.5 --directory _tmp_rn
-# move _tmp_rn/android and _tmp_rn/ios into the repo root, then delete _tmp_rn
-# (or run `init` in a scratch dir and copy android/ + ios/ over)
+# 1) install the app's JS deps
+npm install
+npm run pods        # iOS only (CocoaPods)
 
-# 2) install + pods
-npm install         # or pnpm install
-npm run pods        # iOS only
+# 2) start the agent backend (separate terminal)
+cd server
+cp .env.local.example .env.local   # paste ANTHROPIC_API_KEY (or use BYOK in-app)
+pnpm install && pnpm dev           # serves on :3000
 
-# 3) start the agent backend
-cd server && cp .env.local.example .env.local   # paste ANTHROPIC_API_KEY
-pnpm install && pnpm dev                          # http://localhost:3000
-
-# 4) run the app (in repo root)
+# 3) run the app (repo root)
 npm run start       # Metro
 npm run android     # or: npm run ios
 ```
 
-In the app, open **Settings → providers** and set **server url** to your
-machine's LAN address (e.g. `http://192.168.x.x:3000`) and optionally an
-Anthropic key (BYOK). Then start a session from **repos**.
+Out of the box the app talks to the local dev server (Android emulator →
+`10.0.2.2:3000`, iOS sim → `localhost:3000`) and the `idea-garden` sample repo,
+so a fresh `begin → pick repo → type a turn → APPROVE` flow works end-to-end as
+long as the server has an Anthropic key. To run against a deployed server or a
+real LAN device, set **Settings → providers → server url** (e.g.
+`http://192.168.x.x:3000`).
 
-> Native folders (`android/`, `ios/`) are gitignored except for committed
-> config; regenerate with the `init` step above. The old Capacitor `android/`
-> project was removed.
+> `android/` and `ios/` are committed; their build outputs (`*/build`,
+> `.gradle`, `Pods`, `local.properties`) are gitignored. For a physical Android
+> device, set `ANDROID_HOME` or add `android/local.properties` with `sdk.dir`.
+> The old Capacitor `android/` project was removed.

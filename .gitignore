@@ -10,8 +10,9 @@ server/node_modules
 .DS_Store
 *.tsbuildinfo
 
-# demo repos (server-side, gitignored)
-demo-repos/
+# demo repos at repo root are gitignored; the small committed samples live
+# under server/demo-repos so the agent has a real dir to work in out of the box.
+/demo-repos/
 
 # ─── React Native ───
 # metro / haste

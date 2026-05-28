@@ -22,7 +22,7 @@ export function SettingsScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.body}>
         <Text style={styles.section}>// providers</Text>
 
-        <Field label="server url (required on mobile)">
+        <Field label="server url (blank = local dev server)">
           <TextInput
             value={providers.serverUrl}
             onChangeText={(v) => setProviders('serverUrl', v)}

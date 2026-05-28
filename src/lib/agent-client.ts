@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import EventSource from 'react-native-sse';
 import { useSessions, newId } from './store';
 import { useSettings } from './settings-store';
@@ -5,14 +6,23 @@ import { AgentTurn } from './types';
 import type { AgentEvent } from './agent-events';
 
 /**
- * Base URL of the deployed Lucid agent server (the standalone Next app in
- * ./server). The RN client can't run the agent loop on-device, so the user
- * points it at their server via Settings → providers → server url. Trailing
- * slash trimmed so `${base}/api/...` is clean.
+ * Dev fallback for the agent server when the user hasn't set one yet. The
+ * Android emulator reaches the host machine at 10.0.2.2; the iOS simulator
+ * shares localhost. With the server running via `pnpm server:dev`, the app
+ * works out of the box — no setup needed for the local happy path.
+ */
+const DEV_SERVER_URL =
+  Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+
+/**
+ * Base URL of the Lucid agent server (the standalone Next app in ./server).
+ * The RN client can't run the agent loop on-device. Uses the user's configured
+ * server url (Settings → providers), falling back to the local dev server.
+ * Trailing slash trimmed so `${base}/api/...` is clean.
  */
 export function agentApiBase(): string {
   const raw = useSettings.getState().providers.serverUrl?.trim() ?? '';
-  return raw.replace(/\/+$/, '');
+  return (raw || DEV_SERVER_URL).replace(/\/+$/, '');
 }
 
 /** Live SSE connections keyed by `sessionId:turnId`, so we can cancel them. */
@@ -64,15 +74,6 @@ export async function runAgentScript(opts: {
 
   useSessions.getState().setState(sessionId, 'GEN');
   useSessions.getState()._appendTurn(sessionId, blankTurn);
-
-  if (!base) {
-    emitError(
-      sessionId,
-      turnId,
-      'No server url. Set it in Settings → providers so the app can reach your agent server.',
-    );
-    return;
-  }
 
   const es = new EventSource(`${base}/api/agent/run`, {
     method: 'POST',
