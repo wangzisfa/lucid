@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lucid Terminal · design-asset/ preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-deep: #07060f;
+    --bg-cosmos: #0c0a1c;
+    --text-hi: #f6f4ff;
+    --text-mid: rgba(246, 244, 255, 0.66);
+    --text-lo: rgba(246, 244, 255, 0.40);
+    --rose: #FF8AB4;
+    --cyan: #6BE5FF;
+    --mint: #5EFFB2;
+    --amber: #FFC56B;
+    --border: rgba(255,255,255,0.09);
+    --border-bright: rgba(255,255,255,0.18);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg-deep); color: var(--text-hi); font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; }
+  body {
+    background:
+      radial-gradient(60% 50% at 15% 8%, rgba(139,111,255,0.10), transparent 60%),
+      radial-gradient(50% 40% at 88% 22%, rgba(107,229,255,0.07), transparent 65%),
+      linear-gradient(180deg, #0a0818 0%, #06050f 100%);
+    min-height: 100vh;
+    padding: 56px 48px 96px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  header { margin-bottom: 56px; }
+  .brand {
+    font-family: 'Instrument Serif', serif; font-style: italic;
+    font-size: 56px; line-height: 1; letter-spacing: -0.5px;
+    background: linear-gradient(118deg, #8B6FFF 0%, #6BE5FF 48%, #FF8AB4 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin: 0 0 12px;
+  }
+  .brand-row { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .brand-row .tag {
+    font-family: 'Geist Mono', monospace; font-size: 12px;
+    color: var(--text-mid); letter-spacing: 1px; text-transform: uppercase;
+    padding: 4px 10px; border: 1px solid var(--border-bright); border-radius: 999px;
+  }
+  .lede {
+    font-size: 17px; line-height: 1.55; color: var(--text-mid);
+    max-width: 720px; margin: 16px 0 0;
+  }
+
+  .docs {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin: 32px 0 56px;
+  }
+  .doc {
+    display: block; padding: 18px 20px; border: 1px solid var(--border); border-radius: 10px;
+    text-decoration: none; color: var(--text-hi);
+    background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
+    transition: border-color .2s, transform .2s;
+  }
+  .doc:hover { border-color: var(--border-bright); transform: translateY(-1px); }
+  .doc .name { font-family: 'Geist Mono', monospace; font-size: 13px; color: var(--cyan); }
+  .doc .desc { font-size: 13px; color: var(--text-mid); margin-top: 6px; line-height: 1.45; }
+
+  h2 {
+    font-family: 'Geist Mono', monospace; font-size: 13px; font-weight: 500;
+    color: var(--text-lo); letter-spacing: 2px; text-transform: uppercase;
+    margin: 56px 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+  .grid.landscape { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+  .card {
+    background: #050409; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+  .card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+  .card .frame {
+    background: #06050f; aspect-ratio: 320 / 660;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .card.land .frame { aspect-ratio: 660 / 320; }
+  .card .frame img { max-width: 100%; max-height: 100%; display: block; }
+  .card .meta {
+    padding: 12px 14px 14px; border-top: 1px solid var(--border);
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  }
+  .card .label { font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--text-hi); }
+  .card .num { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--text-lo); }
+
+  footer {
+    margin-top: 80px; padding-top: 32px; border-top: 1px solid var(--border);
+    color: var(--text-lo); font-family: 'Geist Mono', monospace; font-size: 12px;
+    display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+  }
+  footer a { color: var(--cyan); text-decoration: none; }
+  footer a:hover { color: var(--text-hi); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand-row">
+    <h1 class="brand">Lucid</h1>
+    <span class="tag">design-asset</span>
+    <span class="tag" style="color: var(--rose); border-color: rgba(255,138,180,0.4);">▎ D · Terminal</span>
+  </div>
+  <p class="lede">
+    Hand-off package for the Lucid Terminal direction — voice-first mobile coding agent
+    with a hacker aesthetic. Drop this folder into a repo and point Claude Code at
+    <code style="font-family: 'Geist Mono', monospace; color: var(--cyan);">PROMPT.md</code>.
+  </p>
+</header>
+
+<section class="docs">
+  <a class="doc" href="PROMPT.md">
+    <div class="name">PROMPT.md</div>
+    <div class="desc">Main brief — read this first. Pitch, stack, tokens, components, screens, behaviors, what-not-to-do, acceptance criteria.</div>
+  </a>
+  <a class="doc" href="SCREENS.md">
+    <div class="name">SCREENS.md</div>
+    <div class="desc">Per-screen breakdown of all 16 renders. Layout notes, source-file refs, state-chip glossary.</div>
+  </a>
+  <a class="doc" href="README.md">
+    <div class="name">README.md</div>
+    <div class="desc">Orientation — how to feed the folder to Claude Code, folder map, working tips.</div>
+  </a>
+  <a class="doc" href="tokens/tokens.css">
+    <div class="name">tokens/tokens.css</div>
+    <div class="desc">Every color, font, radius, spacing, shadow as CSS variables. Copy into your project as-is.</div>
+  </a>
+  <a class="doc" href="source/variation-d.jsx">
+    <div class="name">source/variation-d*.jsx</div>
+    <div class="desc">Reference React mocks. Treat as a visual spec, not production code. Four files cover all 16 screens.</div>
+  </a>
+  <a class="doc" href="screens/">
+    <div class="name">screens/*.png</div>
+    <div class="desc">PNG render of every screen. The visual ground truth — match silhouette, type, spacing, color use.</div>
+  </a>
+</section>
+
+<h2>Portrait · the core loop</h2>
+<div class="grid">
+  <a class="card" href="screens/01-boot.png"><div class="frame"><img src="screens/01-boot.png" alt="boot"></div><div class="meta"><span class="label">boot</span><span class="num">01</span></div></a>
+  <a class="card" href="screens/02-repos.png"><div class="frame"><img src="screens/02-repos.png" alt="repos"></div><div class="meta"><span class="label">repos · ls -la</span><span class="num">02</span></div></a>
+  <a class="card" href="screens/03-session.png"><div class="frame"><img src="screens/03-session.png" alt="session"></div><div class="meta"><span class="label">session</span><span class="num">03</span></div></a>
+  <a class="card" href="screens/04-plan.png"><div class="frame"><img src="screens/04-plan.png" alt="plan"></div><div class="meta"><span class="label">plan tree</span><span class="num">04</span></div></a>
+  <a class="card" href="screens/05-run.png"><div class="frame"><img src="screens/05-run.png" alt="run"></div><div class="meta"><span class="label">run · preview</span><span class="num">05</span></div></a>
+  <a class="card" href="screens/06-listening.png"><div class="frame"><img src="screens/06-listening.png" alt="listening"></div><div class="meta"><span class="label">listening · REC</span><span class="num">06</span></div></a>
+  <a class="card" href="screens/07-files.png"><div class="frame"><img src="screens/07-files.png" alt="files"></div><div class="meta"><span class="label">files · vim</span><span class="num">07</span></div></a>
+  <a class="card" href="screens/08-agents.png"><div class="frame"><img src="screens/08-agents.png" alt="agents"></div><div class="meta"><span class="label">agents · parallel</span><span class="num">08</span></div></a>
+</div>
+
+<h2>Landscape · tmux unlock</h2>
+<div class="grid landscape">
+  <a class="card land" href="screens/09-land-session.png"><div class="frame"><img src="screens/09-land-session.png" alt="land session"></div><div class="meta"><span class="label">session · 3-pane</span><span class="num">09</span></div></a>
+  <a class="card land" href="screens/10-land-listening.png"><div class="frame"><img src="screens/10-land-listening.png" alt="land listening"></div><div class="meta"><span class="label">listening · hero</span><span class="num">10</span></div></a>
+  <a class="card land" href="screens/11-land-run.png"><div class="frame"><img src="screens/11-land-run.png" alt="land run"></div><div class="meta"><span class="label">run · shell·preview·diff</span><span class="num">11</span></div></a>
+</div>
+
+<h2>Settings</h2>
+<div class="grid">
+  <a class="card" href="screens/12-settings-hub.png"><div class="frame"><img src="screens/12-settings-hub.png" alt="settings hub"></div><div class="meta"><span class="label">settings · hub</span><span class="num">12</span></div></a>
+  <a class="card" href="screens/13-settings-providers.png"><div class="frame"><img src="screens/13-settings-providers.png" alt="providers"></div><div class="meta"><span class="label">[providers] · BYOK</span><span class="num">13</span></div></a>
+  <a class="card" href="screens/14-settings-model.png"><div class="frame"><img src="screens/14-settings-model.png" alt="model"></div><div class="meta"><span class="label">[agent] · model</span><span class="num">14</span></div></a>
+  <a class="card" href="screens/15-settings-raw.png"><div class="frame"><img src="screens/15-settings-raw.png" alt="raw .lucidrc"></div><div class="meta"><span class="label">raw .lucidrc</span><span class="num">15</span></div></a>
+</div>
+<div class="grid landscape" style="margin-top: 20px;">
+  <a class="card land" href="screens/16-settings-land.png"><div class="frame"><img src="screens/16-settings-land.png" alt="settings landscape"></div><div class="meta"><span class="label">settings · landscape</span><span class="num">16</span></div></a>
+</div>
+
+<footer>
+  <span>Lucid · D · Terminal direction · 16 screens · ready for hand-off</span>
+  <span><a href="../Lucid.html">↗ back to full exploration</a></span>
+</footer>
+
+</div>
+</body>
+</html>

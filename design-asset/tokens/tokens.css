@@ -1,0 +1,133 @@
+/* Lucid design tokens — Think & Create */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* type */
+  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* core palette — dreamy midnight */
+  --bg-deep: #07060f;
+  --bg-cosmos: #0c0a1c;
+  --bg-elev-1: rgba(255, 255, 255, 0.03);
+  --bg-elev-2: rgba(255, 255, 255, 0.06);
+  --bg-elev-3: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-border-bright: rgba(255, 255, 255, 0.18);
+  --glass-inner-shine: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* text */
+  --text-hi: #f6f4ff;
+  --text-mid: rgba(246, 244, 255, 0.66);
+  --text-lo: rgba(246, 244, 255, 0.40);
+  --text-disabled: rgba(246, 244, 255, 0.22);
+
+  /* accents */
+  --violet: #8B6FFF;
+  --violet-deep: #5B3FE6;
+  --violet-soft: rgba(139, 111, 255, 0.18);
+  --cyan: #6BE5FF;
+  --cyan-soft: rgba(107, 229, 255, 0.18);
+  --rose: #FF8AB4;
+  --rose-soft: rgba(255, 138, 180, 0.18);
+  --mint: #5EFFB2;
+  --amber: #FFC56B;
+
+  /* aurora gradient — the Lucid signature */
+  --aurora: linear-gradient(118deg, #8B6FFF 0%, #6BE5FF 48%, #FF8AB4 100%);
+  --aurora-soft: linear-gradient(118deg, rgba(139,111,255,0.30) 0%, rgba(107,229,255,0.25) 50%, rgba(255,138,180,0.28) 100%);
+  --aurora-conic: conic-gradient(from 180deg at 50% 50%, #8B6FFF 0deg, #6BE5FF 120deg, #FF8AB4 240deg, #8B6FFF 360deg);
+
+  /* radius scale */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-2xl: 36px;
+  --r-pill: 9999px;
+
+  /* shadow + glow */
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px -20px rgba(0,0,0,0.65);
+  --glow-violet: 0 0 32px rgba(139, 111, 255, 0.42);
+  --glow-cyan: 0 0 32px rgba(107, 229, 255, 0.36);
+  --glow-aurora: 0 0 48px rgba(139, 111, 255, 0.35), 0 0 80px rgba(107, 229, 255, 0.18);
+
+  /* density */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 28px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* utility — glass panel */
+.glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-inner-shine), var(--shadow-card);
+}
+
+.glass-bright {
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--glass-border-bright);
+  box-shadow: var(--glass-inner-shine), var(--shadow-card);
+}
+
+/* aurora light text */
+.aurora-text {
+  background: var(--aurora);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* dreamy ambient bg — for screen backgrounds */
+.bg-cosmos {
+  background:
+    radial-gradient(60% 50% at 15% 8%, rgba(139, 111, 255, 0.28), transparent 60%),
+    radial-gradient(50% 40% at 88% 22%, rgba(107, 229, 255, 0.18), transparent 65%),
+    radial-gradient(70% 55% at 50% 110%, rgba(255, 138, 180, 0.14), transparent 60%),
+    linear-gradient(180deg, #0a0818 0%, #06050f 100%);
+}
+
+/* scrollbar — invisible inside phone frames */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* breathing anim for orbs */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.88; }
+}
+@keyframes breathe-slow {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+@keyframes orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}

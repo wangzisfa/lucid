@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── tokens — mirrors design-asset/tokens/tokens.css ─── */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* type */
+  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* core palette — dreamy midnight */
+  --bg-deep: #07060f;
+  --bg-cosmos: #0c0a1c;
+  --bg-elev-1: rgba(255, 255, 255, 0.03);
+  --bg-elev-2: rgba(255, 255, 255, 0.06);
+  --bg-elev-3: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-border-bright: rgba(255, 255, 255, 0.18);
+  --glass-inner-shine: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* text */
+  --text-hi: #f6f4ff;
+  --text-mid: rgba(246, 244, 255, 0.66);
+  --text-lo: rgba(246, 244, 255, 0.40);
+  --text-disabled: rgba(246, 244, 255, 0.22);
+
+  /* accents */
+  --violet: #8B6FFF;
+  --violet-deep: #5B3FE6;
+  --violet-soft: rgba(139, 111, 255, 0.18);
+  --cyan: #6BE5FF;
+  --cyan-soft: rgba(107, 229, 255, 0.18);
+  --rose: #FF8AB4;
+  --rose-soft: rgba(255, 138, 180, 0.18);
+  --mint: #5EFFB2;
+  --amber: #FFC56B;
+
+  /* aurora gradient — the Lucid signature */
+  --aurora: linear-gradient(118deg, #8B6FFF 0%, #6BE5FF 48%, #FF8AB4 100%);
+  --aurora-soft: linear-gradient(118deg, rgba(139,111,255,0.30) 0%, rgba(107,229,255,0.25) 50%, rgba(255,138,180,0.28) 100%);
+  --aurora-conic: conic-gradient(from 180deg at 50% 50%, #8B6FFF 0deg, #6BE5FF 120deg, #FF8AB4 240deg, #8B6FFF 360deg);
+
+  /* radius scale */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-2xl: 36px;
+  --r-pill: 9999px;
+
+  /* shadow + glow */
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 60px -20px rgba(0,0,0,0.65);
+  --glow-violet: 0 0 32px rgba(139, 111, 255, 0.42);
+  --glow-cyan: 0 0 32px rgba(107, 229, 255, 0.36);
+  --glow-aurora: 0 0 48px rgba(139, 111, 255, 0.35), 0 0 80px rgba(107, 229, 255, 0.18);
+
+  /* density */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 28px;
+
+  /* safe area insets — fall back to 0 on browsers that don't expose env() */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+
+  /* dynamic viewport heights — match Safari's chrome behavior on iOS */
+  --vh: 100vh;
+  --svh: 100svh;
+  --lvh: 100lvh;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-deep);
+  color: var(--text-hi);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  min-height: 100svh;
+  /* lock the layout: prevent rubber-band scroll, prevent the address bar from
+     resizing things mid-gesture. Routes scroll inside <TermPhone> instead. */
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* phone-frame chrome should never select on long-press */
+.no-select { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+
+/* safe-area utilities */
+.pt-safe { padding-top:    var(--safe-top);    }
+.pr-safe { padding-right:  var(--safe-right);  }
+.pb-safe { padding-bottom: var(--safe-bottom); }
+.pl-safe { padding-left:   var(--safe-left);   }
+
+/* aurora text helper */
+.aurora-text {
+  background: var(--aurora);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* scrollbar — invisible inside phone frames */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* ─── keyframes ─── */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.88; }
+}
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50%     { transform: scaleY(1); }
+}
+@keyframes term-fade {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cursor-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.animate-breathe { animation: breathe 1s steps(2, end) infinite; }
+.animate-cursor  { animation: cursor-blink 1s steps(2, end) infinite; }
