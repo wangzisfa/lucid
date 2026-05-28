@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **⚠️ Migration in progress — read `RN-MIGRATION.md` first.**
+> The app is being rebuilt from Next.js (web + Capacitor) into a **bare React
+> Native** client at the repo root, with the Claude Agent SDK loop kept as a
+> standalone Next.js backend in `./server`. Native navigation
+> (`@react-navigation/native-stack`) now provides the OS back gesture — no
+> custom gesture code. Much of the web-specific guidance below is historical and
+> now applies to `./server` (the backend) or to the pre-migration design intent.
+> The RN app lives in `src/` (`navigation/`, `screens/`, `components/`, `lib/`,
+> `theme/`).
+
 ## What this is
 
 Lucid Terminal: a voice-first mobile coding agent. Hold the mic, say what you want, watch Claude plan / approve / write / ship inside a phone-shaped terminal UI. Next.js 14 (App Router) + TypeScript + Tailwind + Zustand, with `@anthropic-ai/claude-agent-sdk` driving the real agent loop on the server.
