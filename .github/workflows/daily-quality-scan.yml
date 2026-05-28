@@ -96,12 +96,12 @@ jobs:
       - name: Claude triage + daily report
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Use Opus for the deeper triage reasoning; cap turns + budget so a runaway loop can't bleed.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Use Opus for the deeper triage reasoning. Subscription quota is
+          # gated by --max-turns and the job-level timeout, not a USD budget.
           claude_args: |
             --max-turns 15
             --model claude-opus-4-7
-            --max-budget-usd 5
             --append-system-prompt "You are a quality architect assistant for the Lucid Terminal repo (Next.js 14 + TS + Zustand + @anthropic-ai/claude-agent-sdk). Report real issues only — never modify code. Honor the conventions in CLAUDE.md (gestures over clicks, design tokens only, no emoji, etc.) when judging severity."
           prompt: |
             Scope for this run: ${{ env.SCOPE }} (changed file count: ${{ steps.changed.outputs.count }}).
