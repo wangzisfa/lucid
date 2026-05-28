@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { BootScreen } from '@/components/screens/BootScreen';
 
 interface ScreenCard {
   num: string;
@@ -11,7 +10,7 @@ interface ScreenCard {
 }
 
 const portrait: ScreenCard[] = [
-  { num: '01', slug: 'boot',      title: 'boot',      built: true,  staticPreview: <BootScreen /> },
+  { num: '01', slug: 'boot',      title: 'boot',      built: true  },
   { num: '02', slug: 'repos',     title: 'repos',     built: true  },
   { num: '03', slug: 'session',   title: 'session',   built: true  },
   { num: '04', slug: 'plan',      title: 'plan',      built: true  }, // inline in session

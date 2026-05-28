@@ -9,30 +9,26 @@ interface Props {
 }
 
 /**
- * Centers a single phone-framed screen on the page.
- * Used by `/`, `/repos`, `/session`, etc. No navigation chrome unless
- * `devNav` is on — boot et al. are meant to feel like the real app.
+ * Full-viewport host for a single screen. The screen itself (via `<TermPhone>`
+ * / `<LandTermPhone>`) renders edge-to-edge, so this is just an unpadded
+ * fullscreen container — no centering, no demo framing.
  */
 export function ScreenStage({ children, devNav = false }: Props) {
   return (
     <main
       style={{
-        minHeight: '100vh',
+        width: '100vw',
+        height: '100svh',
         background: 'var(--bg-deep)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        gap: 12,
+        overflow: 'hidden',
       }}
     >
       {devNav && (
         <nav
           style={{
             position: 'fixed',
-            top: 12,
-            right: 12,
+            top: 'calc(var(--safe-top) + 8px)',
+            right: 'calc(var(--safe-right) + 8px)',
             display: 'flex',
             gap: 12,
             fontFamily: 'var(--font-mono)',
