@@ -67,6 +67,7 @@ export function settingsToToml(s: SettingsShape): string {
   lines.push(`openai.key    = ${q(s.providers.openaiKey)}`);
   lines.push(`google.key    = ${q(s.providers.googleKey)}`);
   lines.push(`ollama.url    = ${q(s.providers.ollamaUrl)}`);
+  lines.push(`server.url    = ${q(s.providers.serverUrl)}`);
   lines.push(`fallback = ${q(s.providers.fallback)}`);
   lines.push(`on_device_only = ${s.providers.onDeviceOnly}`);
   lines.push('');
@@ -262,6 +263,10 @@ function assign(
       case 'ollama.url':
         if (typeof value !== 'string') return { line: lineNo, message: 'url must be a string' };
         out.providers.ollamaUrl = value;
+        return null;
+      case 'server.url':
+        if (typeof value !== 'string') return { line: lineNo, message: 'url must be a string' };
+        out.providers.serverUrl = value;
         return null;
       case 'fallback':
         if (value === 'lucid-cloud' || value === 'none') {

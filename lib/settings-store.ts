@@ -45,6 +45,9 @@ export interface SettingsShape {
     openaiKey: string;
     googleKey: string;
     ollamaUrl: string;
+    // Base URL of the deployed Lucid server that runs the agent loop. Empty =
+    // same-origin (web). The mobile shell needs this set to reach a server.
+    serverUrl: string;
     fallback: 'lucid-cloud' | 'none';
     onDeviceOnly: boolean;
   };
@@ -75,10 +78,11 @@ export const defaults: SettingsShape = {
   },
   providers: {
     active: 'anthropic',
-    anthropicKey: 'sk-ant-···k29x',
+    anthropicKey: '',
     openaiKey: '',
     googleKey: '',
     ollamaUrl: 'localhost:11434',
+    serverUrl: '',
     fallback: 'lucid-cloud',
     onDeviceOnly: true,
   },
@@ -117,7 +121,7 @@ interface SettingsStore extends SettingsShape {
   reset: () => void;
 }
 
-const STORAGE_KEY = 'lucid:settings:v1';
+const STORAGE_KEY = 'lucid:settings:v2';
 
 export const useSettings = create<SettingsStore>()(
   persist(
@@ -136,6 +140,7 @@ export const useSettings = create<SettingsStore>()(
     }),
     {
       name: STORAGE_KEY,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         agent: s.agent,

@@ -263,6 +263,44 @@ export function SettingsProviders() {
           </Row>
         </div>
 
+        {/* SERVER */}
+        <div style={{ marginTop: 12, color: 'var(--text-lo)', fontSize: 9.5, letterSpacing: 0.6 }}>
+          // SERVER
+        </div>
+        <div
+          style={{
+            marginTop: 4,
+            padding: 8,
+            border: '1px dashed rgba(255,138,180,0.4)',
+            background: 'rgba(255,138,180,0.04)',
+          }}
+        >
+          <input
+            type="url"
+            inputMode="url"
+            value={settings.providers.serverUrl}
+            onChange={(e) => settings.setProviders('serverUrl', e.target.value.trim())}
+            placeholder="https://your-lucid-server"
+            spellCheck={false}
+            autoCapitalize="none"
+            autoCorrect="off"
+            style={{
+              width: '100%',
+              padding: '5px 6px',
+              background: 'rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10.5,
+              color: 'var(--text-hi)',
+              outline: 'none',
+            }}
+          />
+          <div style={{ marginTop: 6, fontSize: 9, color: 'var(--text-lo)', lineHeight: 1.5 }}>
+            → where the agent loop runs · the app sends prompts + your key here
+            <br />→ blank = same origin (web)
+          </div>
+        </div>
+
         {/* ADD KEY */}
         <div style={{ marginTop: 12, color: 'var(--text-lo)', fontSize: 9.5, letterSpacing: 0.6 }}>
           // ADD KEY

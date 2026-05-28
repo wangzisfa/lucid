@@ -14,7 +14,7 @@ import {
   AgentDiff,
   LogLine,
 } from './types';
-import { runAgentScript } from './agent-runner';
+import { runAgentScript, agentApiBase } from './agent-runner';
 
 const newId = () => Math.random().toString(36).slice(2, 10);
 
@@ -268,7 +268,7 @@ export const useSessions = create<SessionsStoreShape>()(
             // server-side run is gone (page reload, network blip) the POST
             // 200s with `{ok:false}` and we ignore it.
             if (typeof window !== 'undefined') {
-              void fetch('/api/agent/approve', {
+              void fetch(`${agentApiBase()}/api/agent/approve`, {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ sessionId, allow: true }),
