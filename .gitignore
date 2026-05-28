@@ -1,6 +1,7 @@
 node_modules
 .next
 out
+.mobile-export-stash
 dist
 .env*.local
 .env.local

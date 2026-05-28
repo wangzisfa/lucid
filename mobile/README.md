@@ -2,13 +2,12 @@
 
 Lucid Terminal's agent loop runs **server-side** (`/api/agent/run` SSE +
 `@anthropic-ai/claude-agent-sdk` on Node), so the Android app cannot run it
-on-device. The APK is a native WebView shell around a **deployed** Next.js
-instance — point it at your server and all the relative `/api/...` calls work
-against that origin.
+on-device. The APK is a native WebView shell; the agent always executes on a
+server you deploy.
 
 ## Prerequisites (on your build machine)
 
-- JDK 21
+- JDK 21 (`java -version` must report 21 — Capacitor 8 requires it)
 - Android SDK with **platform 36** + build-tools, and `ANDROID_HOME` set
   (Android Studio installs these; or use `sdkmanager`)
 - Network access to `dl.google.com` / `maven.google.com` (the Android Gradle
@@ -18,35 +17,68 @@ against that origin.
 > Google's hosts are blocked there and the Android SDK can't be installed.
 > Everything except the final Gradle build is committed.
 
-## Build a debug APK
+## Two packaging modes
+
+### 1. Demo bundle — configure inside the app (recommended)
+
+Bundles the static client UI into the APK. The app opens into the real UI
+offline; you set the server URL + API key in **Settings › providers**, and
+agent turns hit that remote server.
 
 ```sh
 pnpm install
-
-# Point the app at your deployed Lucid Terminal server:
-export LUCID_MOBILE_SERVER_URL=https://your-lucid-deployment.example.com
-
-pnpm android:apk          # cap sync android && ./gradlew assembleDebug
+pnpm android:demo     # static export (app/api stashed) → cap sync → assembleDebug
 ```
 
-Output: `android/app/build/outputs/apk/debug/app-debug.apk`
+Then on the phone: open **Settings › providers**, fill **server url**
+(`https://your-lucid-server`) and paste your **anthropic** key (`sk-ant-…`).
+Browsing the UI works with no server; running the agent needs both set.
 
-For a LAN dev server use an `http://<your-ip>:3000` URL — `capacitor.config.ts`
-auto-enables cleartext for `http://` origins.
+### 2. Remote-URL shell — bake the URL at build time
 
-## Other useful commands
+The WebView loads your deployed instance directly; no in-app config.
 
 ```sh
+pnpm install
+export LUCID_MOBILE_SERVER_URL=https://your-lucid-deployment.example.com
+pnpm android:apk
+```
+
+Output (both modes): `android/app/build/outputs/apk/debug/app-debug.apk`
+
+## BYOK (bring-your-own-key)
+
+The client sends the key from **Settings › providers** in each
+`/api/agent/run` request body; the server hands it to the agent subprocess via
+`options.env.ANTHROPIC_API_KEY`, falling back to the server's own
+`ANTHROPIC_API_KEY` env var when the request omits one. The key is **never**
+compiled into the APK.
+
+- Must be an **Anthropic** key (`sk-ant-…`). The agent SDK speaks Anthropic's
+  native API — an OpenRouter / OpenAI key will not work here.
+- Send keys only over **HTTPS** (the body crosses the network each turn).
+
+## CORS
+
+The Android WebView calls the agent routes cross-origin
+(`capacitor://localhost` → your server), so `app/api/agent/{run,approve}`
+return `Access-Control-Allow-Origin: *` and handle the `OPTIONS` preflight.
+Tighten the origin allowlist before any public deployment.
+
+## Server deployment
+
+The server needs a Node runtime (not static hosting): Vercel, a VPS, a
+container, etc. Set `ANTHROPIC_API_KEY` there if you want a server-side
+fallback key. The agent runs against repos on **that server's** filesystem
+under `PROJECT_ROOT`.
+
+## Other commands
+
+```sh
+pnpm mobile:export        # build only the static client bundle into out/
 pnpm cap:sync             # copy web assets + config into the native project
 pnpm android:open         # open the project in Android Studio
 ```
-
-## How the server URL is wired
-
-`capacitor.config.ts` reads `LUCID_MOBILE_SERVER_URL` at sync time. When set,
-the WebView loads that URL directly; when unset it falls back to the bundled
-`mobile/www/index.html` placeholder (which just tells you to set the URL).
-Re-run `pnpm cap:sync` after changing the env var.
 
 ## Release build
 

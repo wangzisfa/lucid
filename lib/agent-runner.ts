@@ -1,8 +1,20 @@
 'use client';
 
 import { useSessions, newId } from './store';
+import { useSettings } from './settings-store';
 import { AgentTurn } from './types';
 import type { AgentEvent } from './agent-events';
+
+/**
+ * Base URL for the server-side agent routes. Empty string = same-origin (web).
+ * The mobile shell loads a bundled static build whose origin has no server, so
+ * the user points it at their deployed Lucid instance via Settings ›
+ * providers › server url. Trailing slash trimmed so `${base}/api/...` is clean.
+ */
+export function agentApiBase(): string {
+  const raw = useSettings.getState().providers.serverUrl?.trim() ?? '';
+  return raw.replace(/\/+$/, '');
+}
 
 /**
  * Track which (session, turn) pairs already have a runner attached. Guards
@@ -67,13 +79,14 @@ export async function runAgentScript(opts: {
 
   let resp: Response;
   try {
-    resp = await fetch('/api/agent/run', {
+    resp = await fetch(`${agentApiBase()}/api/agent/run`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         sessionId,
         userText,
         repoPath: session.repo.path,
+        apiKey: useSettings.getState().providers.anthropicKey.trim() || undefined,
       }),
       signal: ctrl.signal,
     });

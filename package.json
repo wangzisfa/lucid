@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "cap:sync": "cap sync android",
     "android:open": "cap open android",
-    "android:apk": "cap sync android && cd android && ./gradlew assembleDebug"
+    "android:apk": "cap sync android && cd android && ./gradlew assembleDebug",
+    "mobile:export": "node scripts/mobile-export.mjs",
+    "android:demo": "node scripts/mobile-export.mjs && LUCID_MOBILE_DEMO=1 cap sync android && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.153",

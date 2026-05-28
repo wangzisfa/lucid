@@ -12,6 +12,19 @@ export const dynamic = 'force-dynamic';
 const PROJECT_ROOT = process.cwd();
 const MODEL = process.env.CLAUDE_AGENT_MODEL || 'claude-opus-4-7';
 
+// The mobile shell calls this route cross-origin (from capacitor://localhost /
+// https://localhost), so the streaming fetch and its JSON preflight need CORS.
+const CORS_HEADERS: Record<string, string> = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'POST, OPTIONS',
+  'access-control-allow-headers': 'content-type',
+  'access-control-max-age': '86400',
+};
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
 const APPEND_SYSTEM_PROMPT = `
 You are the agent behind Lucid Terminal — a voice-first mobile coding assistant.
 The user gave you a short prompt (often a single sentence from voice) and a
@@ -40,7 +53,7 @@ short shell-style log lines over essays.
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as
-    | { sessionId?: string; userText?: string; repoPath?: string }
+    | { sessionId?: string; userText?: string; repoPath?: string; apiKey?: string }
     | null;
 
   const sessionId = body?.sessionId;
@@ -50,7 +63,7 @@ export async function POST(req: NextRequest) {
   if (!sessionId || !userText || !repoPath) {
     return new Response(
       JSON.stringify({ error: 'sessionId, userText and repoPath are required' }),
-      { status: 400, headers: { 'content-type': 'application/json' } },
+      { status: 400, headers: { 'content-type': 'application/json', ...CORS_HEADERS } },
     );
   }
 
@@ -58,17 +71,22 @@ export async function POST(req: NextRequest) {
   if (!repoAbs.startsWith(PROJECT_ROOT) || !fs.existsSync(repoAbs)) {
     return new Response(
       JSON.stringify({ error: `repoPath ${repoPath} not found` }),
-      { status: 400, headers: { 'content-type': 'application/json' } },
+      { status: 400, headers: { 'content-type': 'application/json', ...CORS_HEADERS } },
     );
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return sseError('ANTHROPIC_API_KEY is not set on the server.');
+  // BYOK: prefer the per-request key from the client, fall back to the server
+  // env. The key is handed to the agent subprocess via `options.env` below.
+  const apiKey = body?.apiKey?.trim() || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return sseError(
+      'No API key. Set one in Settings › providers, or ANTHROPIC_API_KEY on the server.',
+    );
   }
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      runAgent({ sessionId, userText, repoAbs, controller, signal: req.signal }).catch(
+      runAgent({ sessionId, userText, repoAbs, apiKey, controller, signal: req.signal }).catch(
         (err) => {
           emit(controller, {
             type: 'error',
@@ -86,6 +104,7 @@ export async function POST(req: NextRequest) {
       'cache-control': 'no-cache, no-transform',
       connection: 'keep-alive',
       'x-accel-buffering': 'no',
+      ...CORS_HEADERS,
     },
   });
 }
@@ -94,12 +113,13 @@ interface RunCtx {
   sessionId: string;
   userText: string;
   repoAbs: string;
+  apiKey: string;
   controller: ReadableStreamDefaultController<Uint8Array>;
   signal: AbortSignal;
 }
 
 async function runAgent(ctx: RunCtx) {
-  const { sessionId, userText, repoAbs, controller, signal } = ctx;
+  const { sessionId, userText, repoAbs, apiKey, controller, signal } = ctx;
   const t0 = Date.now();
   let planEmitted = false;
   let approved = false;
@@ -168,6 +188,9 @@ async function runAgent(ctx: RunCtx) {
       permissionMode: 'default',
       abortController,
       includePartialMessages: false,
+      // `env` REPLACES the subprocess environment, so spread process.env to keep
+      // PATH/HOME etc., then inject the resolved (BYOK or server) key.
+      env: { ...process.env, ANTHROPIC_API_KEY: apiKey },
     },
   });
 
@@ -483,7 +506,7 @@ function sseError(message: string): Response {
   const enc = new TextEncoder();
   const body = `data: ${JSON.stringify({ type: 'error', message })}\n\n`;
   return new Response(enc.encode(body), {
-    headers: { 'content-type': 'text/event-stream' },
+    headers: { 'content-type': 'text/event-stream', ...CORS_HEADERS },
   });
 }
 
