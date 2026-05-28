@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Lucid Terminal</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0a0a12;
+        color: #e7e7ee;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      main {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+      h1 {
+        font-size: 18px;
+        letter-spacing: 0.04em;
+        margin: 0;
+      }
+      p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #9aa;
+        max-width: 30em;
+        margin: 0;
+      }
+      code {
+        color: #f6c177;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Lucid Terminal</h1>
+      <p>
+        No server URL configured. Set
+        <code>LUCID_MOBILE_SERVER_URL</code> to your deployed Lucid Terminal
+        instance, then run <code>pnpm cap sync android</code> and rebuild the
+        APK. The agent loop runs server-side, so the app needs a live origin.
+      </p>
+    </main>
+  </body>
+</html>
