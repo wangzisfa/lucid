@@ -100,8 +100,10 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Use Opus for the deeper triage reasoning. Subscription quota is
           # gated by --max-turns and the job-level timeout, not a USD budget.
+          # The turn budget needs to cover: ~6 file reads + analysis +
+          # 1-2 GitHub MCP calls (search existing issue, create/update).
           claude_args: |
-            --max-turns 15
+            --max-turns 50
             --model claude-opus-4-7
             --append-system-prompt "You are a quality architect assistant for the Lucid Terminal repo (Next.js 14 + TS + Zustand + @anthropic-ai/claude-agent-sdk). Report real issues only — never modify code. Honor the conventions in CLAUDE.md (gestures over clicks, design tokens only, no emoji, etc.) when judging severity."
           prompt: |
@@ -114,6 +116,16 @@ jobs:
               - .scan/eslint.json    ESLint JSON report
               - .scan/semgrep.json   Semgrep JSON report
               - CLAUDE.md            project conventions (use as the rubric for non-functional issues)
+
+            Efficiency rules (the turn budget is finite):
+              - Read all input files in parallel in a single tool batch
+                (multiple Read calls in one assistant turn).
+              - Do not re-read files you have already read.
+              - Do not explore the repo beyond the listed inputs unless a
+                finding's root cause truly requires it; if you do, batch the
+                follow-up reads too.
+              - The Markdown report belongs in the issue body, not in
+                intermediate tool outputs.
 
             Do the following, in order:
 
