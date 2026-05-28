@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { EdgeSwipeBack } from '@/components/EdgeSwipeBack';
+import { SwipeBack } from '@/components/SwipeBack';
 
 export const metadata: Metadata = {
   title: 'Lucid Terminal',
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         {children}
-        <EdgeSwipeBack />
+        <SwipeBack />
       </body>
     </html>
   );
