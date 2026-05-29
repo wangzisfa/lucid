@@ -51,6 +51,7 @@ design-asset/
 │   ├── variation-d.jsx
 │   ├── variation-d-extra.jsx
 │   ├── variation-d-live.jsx
+│   ├── variation-d-auth.jsx
 │   └── variation-d-settings.jsx
 └── screens/          PNG render of every screen (visual ground truth)
     ├── 01-boot.png
@@ -68,7 +69,14 @@ design-asset/
     ├── 13-settings-providers.png
     ├── 14-settings-model.png
     ├── 15-settings-raw.png
-    └── 16-settings-land.png        (landscape)
+    ├── 16-settings-land.png        (landscape)
+    ├── 17-auth-login.png           ← auth flow
+    ├── 18-auth-bridge.png
+    ├── 19-auth-success.png
+    ├── 20-auth-error.png
+    ├── 21-account.png              (lives under settings)
+    ├── 22-signout.png
+    └── 23-reauth.png
 ```
 
 ---

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { IconChevL, IconMenu } from './icons';
+import { GlobalMenu } from './GlobalMenu';
 import { colors, fonts } from '@/theme/tokens';
 import { chipTone, toneColor, type SessionChipState } from '@/lib/types';
 
@@ -10,16 +11,17 @@ interface Props {
   chip?: SessionChipState;
   /** Hide the back button (entry screens). */
   hideBack?: boolean;
-  onMenu?: () => void;
 }
 
 /**
- * Top app bar. The back chevron is a convenience that mirrors the OS back —
- * the real back affordance is the system swipe gesture provided by
- * native-stack, so this is purely supplementary.
+ * Top app bar. The left slot carries a back chevron (mirrors the OS back — the
+ * real back affordance is the native swipe gesture) and a menu hamburger that
+ * opens the `GlobalMenu` sheet. Because every screen renders this bar, every
+ * screen can reach session / agents / files / settings.
  */
-export function TermAppBar({ title, chip, hideBack, onMenu }: Props) {
+export function TermAppBar({ title, chip, hideBack }: Props) {
   const navigation = useNavigation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const canGoBack = !hideBack && navigation.canGoBack();
 
   return (
@@ -36,17 +38,15 @@ export function TermAppBar({ title, chip, hideBack, onMenu }: Props) {
             <IconChevL size={14} stroke={colors.textMid} sw={2} />
           </Pressable>
         )}
-        {onMenu && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="menu"
-            onPress={onMenu}
-            hitSlop={10}
-            style={styles.btn}
-          >
-            <IconMenu size={14} stroke={colors.textMid} sw={2} />
-          </Pressable>
-        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="menu"
+          onPress={() => setMenuOpen(true)}
+          hitSlop={10}
+          style={styles.btn}
+        >
+          <IconMenu size={14} stroke={colors.textMid} sw={2} />
+        </Pressable>
       </View>
 
       <Text style={styles.title} numberOfLines={1}>
@@ -60,6 +60,8 @@ export function TermAppBar({ title, chip, hideBack, onMenu }: Props) {
           </Text>
         )}
       </View>
+
+      <GlobalMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
   );
 }

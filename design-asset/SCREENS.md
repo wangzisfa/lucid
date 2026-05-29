@@ -104,6 +104,52 @@ Triggered by device rotation. The phone unlocks a tmux-style multi-pane layout. 
 
 ---
 
+## Auth (17–23) — portrait
+
+All auth screens are command-driven. Provider keys (`g` `h` `a` `·`) live inside rose-colored brackets — the bracket itself is the affordance. **No vendor brand assets** (no white Google G, no GitHub mark) — the character IS the brand reference.
+
+### `17-auth-login.png` — provider picker
+**Purpose:** pick a sign-in method from the boot screen.
+**Layout:** `LUCID · auth` header (rose dot, `unauthenticated` tag), the command line `$ lucid auth --provider <p>`, then four provider rows. Google gets a rose accent-bar + subtle gradient wash ("recommended"). Each row: `[k]` key · label · short hint (e.g. `+ repo scope`, `ios native`, `30 min`). Bottom: `› press g ▮` cursor prompt + tiny legal line.
+**Behavior:** type the key (or tap the row) → open in-app browser tab for that provider. Guest skips the browser entirely.
+**Source:** `D_Auth_Login` in `variation-d-auth.jsx`.
+
+### `18-auth-bridge.png` — OAuth handoff (loading)
+**Purpose:** waiting for the user to finish in the browser.
+**Layout:** amber `WAITING` chip. Log stream fades in line-by-line (`✓ pkce verifier · sha256`, `✓ deep-link registered`, `◐ waiting for consent · t=12s`). A dashed amber card explains "finish sign-in in the browser" with an ASCII spinner (`◐` rotating) and `polling /token · 0.5s`. Below: `[↻] resend link` / `[x] cancel`. Bottom row: `// request_id · req_01HXG7K2…` for support.
+**Behavior:** the app polls its own backend (which holds the OAuth state token) every 0.5s. On `200` → push success; on `4xx/timeout` → push error.
+**Source:** `D_Auth_Bridge`.
+
+### `19-auth-success.png` — identity confirmation
+**Purpose:** brief beat after token exchange before jumping to repos.
+**Layout:** mint `OK · 200` chip. Log lines all mint (`✓ token exchange · 142ms`, `✓ identity verified · iris@hey.com`). Mint-bordered card with an ASCII avatar (`IR` in a 44px square) + name + email + `via google · oauth pkce`. Bottom rose card: `› opening ~/repos ▮`.
+**Behavior:** auto-advances to `02-repos` after ~600ms. Skippable by tapping.
+**Source:** `D_Auth_Success`.
+
+### `20-auth-error.png` — sign-in failed
+**Purpose:** something went wrong during the handoff.
+**Layout:** rose `ERR · 401` chip. The log stream shows the failure point (`✗ POST /token failed · 401 invalid_grant`). Rose-bordered fault card explains plain-English why, with a stack trace rendered as an ASCII tree (`├─ AuthBridge.exchange()` etc). Four recovery options: `[r] retry · same provider`, `[g] try google again from scratch`, `[b] back · choose another method`, `[?] copy diagnostics`.
+**Source:** `D_Auth_Error`.
+
+### `21-account.png` — profile & linked providers (lives in Settings)
+**Purpose:** see who you're signed in as + manage linked providers.
+**Layout:** `:Account` header. Identity card with a 48px rose-bordered ASCII avatar + name/email/pro-status. Below: `LINKED PROVIDERS · 2 of 4` divider, then 4 rows: google (PRIMARY · rose pill), github (LINKED · cyan pill), apple (LINK · greyed), email (LINK · greyed). Session-info dashed box: sid, opened, expires, devices. Bottom danger rows: `[x] sign out · this device`, `[X] sign out · all devices`, `[!] delete account · 14d cool-down`.
+**Source:** `D_Settings_Account`.
+
+### `22-signout.png` — sign-out confirm modal
+**Purpose:** confirm a destructive action.
+**Layout:** dimmed account view behind a rose-bordered modal. Modal header is a solid rose strip: `:CONFIRM · sign-out · esc to cancel`. Inside: serif heading `Sign out of lucid?`, mono body explaining "this device only · 2 active sessions remain", a faux shell preview of what's about to run (`$ lucid auth signout --device this`), then two buttons: `[esc] cancel` (outlined) and `[↵] sign out` (filled rose).
+**Behavior:** `esc` or backdrop tap → dismiss. `↵` or tap on filled button → executes, jumps to `17-auth-login`.
+**Source:** `D_Auth_Signout`.
+
+### `23-reauth.png` — token expired takeover
+**Purpose:** session lapsed mid-conversation; user needs to re-handshake without losing context.
+**Layout:** dimmed session in background (visibly shows the in-flight plan). Amber-bordered banner at top. Amber header strip: `! REAUTH REQUIRED · 401 · token expired`. Serif heading `Your google session lapsed`. Explainer + faux shell showing the failed refresh. Two-column status grid: session PAUSED, drafts kept YES · 14m ago, token expired 2m ago. Two buttons: `[s] sign out` (outlined) and `[g] re-auth with google` (filled amber, takes 2/3 width).
+**Behavior:** non-destructive — agent runs are paused, not cancelled. After successful reauth, the previous session resumes from the last tool call.
+**Source:** `D_Auth_Reauth`.
+
+---
+
 ## State-chip glossary
 
 The two-letter chip on the right of `TermAppBar` is the most important UI signal in the whole app. Read it constantly:
@@ -117,6 +163,9 @@ The two-letter chip on the right of `TermAppBar` is the most important UI signal
 | `LIVE` | mint   | run server is live, HMR connected                                |
 | `EDIT` | cyan   | user is editing settings or files                                |
 | `CONF` | cyan   | viewing config (`.lucidrc`)                                      |
+| `WAIT` | amber  | OAuth bridge polling                                             |
+| `OK`   | mint   | post-auth success beat                                           |
+| `ERR`  | rose   | auth (or other) error state                                      |
 | `3 LIVE` | mint | N parallel agents running                                        |
 
 The chip should *pulse* gently (1s breathe) only in `GEN` / `REC` / `PLAN`. Static everywhere else.

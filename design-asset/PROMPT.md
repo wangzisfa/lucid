@@ -35,9 +35,10 @@ design-asset/
 │   ├── variation-d.jsx         ← portrait screens 1–6 (boot, repos, session, plan, run, listening)
 │   ├── variation-d-extra.jsx   ← portrait 7–8 + all 3 landscape screens
 │   ├── variation-d-live.jsx    ← interactive prototypes (hold-to-record, deploy, resizable panes)
+│   ├── variation-d-auth.jsx    ← 7 auth screens (login, bridge, success, error, account, signout, reauth)
 │   └── variation-d-settings.jsx← settings hub + drilldowns
 └── screens/           ← rendered PNG of every screen (visual ground truth — match these)
-    ├── 01-boot.png ... 16-settings-land.png
+    ├── 01-boot.png ... 23-reauth.png
 ```
 
 **The `source/*.jsx` files are pinned, scaled-down React mocks built inside a 320×660 phone frame.** They are not lint-clean, not componentized, not exhaustive — they exist to *show you the exact visual treatment* of every element. Use them like a designer's Figma, not a starter kit. Re-implement everything in your real stack from scratch.
@@ -120,6 +121,15 @@ Don't use rounded "card" components. Don't use shadow boxes. Spacing is enforced
 
 See `SCREENS.md` for the full table with screenshots. TL;DR build order:
 
+**Sprint 0 — auth (do this first, everything else assumes a session)**
+1. `17-auth-login` — command-style provider picker (`[g] [h] [a] [·]`)
+2. `18-auth-bridge` — OAuth handoff loading state
+3. `19-auth-success` — token exchange + identity flash → repos
+4. `20-auth-error` — failed sign-in / network error with retry tree
+5. `21-account` — profile + linked providers (lives under settings)
+6. `22-signout` — sign-out confirm (vim `:q!` modal)
+7. `23-reauth` — token-expired takeover banner
+
 **Sprint 1 — read-only shell**
 1. `01-boot` — cold start / handshake
 2. `02-repos` — repo list rendered as `ls -la`
@@ -142,6 +152,7 @@ See `SCREENS.md` for the full table with screenshots. TL;DR build order:
 
 Things the static screens don't show — implement these:
 
+- **Auth is the root of the navigator.** App boots into `01-boot`; tapping anywhere transitions to `17-auth-login`. Successful sign-in pushes `18-bridge → 19-success → 02-repos`. On launch, if SecureStore has a valid refresh token, skip 17–19 entirely and go straight to `02-repos`.
 - **Hold-to-record mic.** Press-and-hold a 56px CTA. While held: pulse rose ember behind it, run `<BlockWave>` at full amplitude, stream transcription tokens left-to-right at ~1.5 tokens/sec. Release → "transcribing" (whisper-style) ~600ms → "done" → push as new user turn. Drag finger up while held → cancel.
 - **State chip drives chrome.** When `state === 'REC'`, the entire phone tints faintly rose (10% rose wash, mix-blend overlay). When `LIVE`, mint. When `GEN`, no tint. When `PLAN`, amber pulse on the app-bar chip only.
 - **Plan approval.** Plan items render as `[/]` (done), `[●]` (running), `[ ]` (pending). User taps `[A] APPROVE PLAN` → all `[ ]` flip to `[●]` sequentially with 250ms stagger.
@@ -162,22 +173,70 @@ Things the static screens don't show — implement these:
 - **No skeuomorphic glass.** No `backdrop-filter` blur except on the bottom command bar in landscape.
 - **No theme switcher.** D is dark-mode-only. Light mode kills the aesthetic.
 - **No "AI sparkle" iconography.** No four-pointed stars on send buttons. The mic is the primary input affordance.
+- **No vendor brand buttons** with their official assets (the white Google G, the GitHub Octocat). The aesthetic is `[g] sign in with google` in mono — keys in rose brackets, label in white. If App Store review requires the official Google button on iOS, treat that as a build-only override.
+- **Don't put auth behind a logo splash.** `01-boot` already serves that role; auth is the very next screen.
 
 ---
 
-## 8 · Acceptance criteria
+## 8 · Auth — implementation notes
+
+The seven auth screens (17–23) cover the full session lifecycle.
+
+### Providers
+- **Google** — primary. Identity only (no Drive/Calendar). Use `expo-auth-session` with PKCE; web client ID for the auth flow, iOS/Android client IDs for the native redirect. Scope: `openid email profile`.
+- **GitHub** — "sign in for developers." Two scope tiers: identity-only (`read:user`) or repo (`repo` + `workflow`). The login screen advertises "+ repo scope" because the agent will want clone/push later — surface this clearly during consent.
+- **Apple** — required for iOS App Store if you ship any third-party auth. Use `expo-apple-authentication`.
+- **Guest** — read-only, 30-minute ephemeral session. No SecureStore write. Useful for App Store reviewers and first-touch curiosity.
+
+### Storage
+- Refresh tokens → **Expo SecureStore** (Keychain on iOS, EncryptedSharedPreferences on Android). Never `AsyncStorage`.
+- Access tokens → in-memory only. Re-derive from refresh on cold start.
+- Identity (name, email, avatar URL) → `expo-sqlite` for offline render of the account screen.
+- One row per linked provider; primary provider has `is_primary = true`. The account screen reads this table.
+
+### State machine
+```
+unauthenticated → bridging → exchanging → active
+                     │           │
+                     └─cancel    └─401/timeout → failed (20-auth-error)
+                       ↓                            │
+                  unauthenticated              retry → bridging
+
+active ── 401 from any API ──► reauth-needed (23-reauth)
+  ▲                                  │
+  └─────────── success ──────────────┘
+```
+
+### Reauth (screen 23)
+- A `<ReauthGate>` wraps the authenticated tree. When a 401 comes back from any API call (Claude, GitHub, deploy target), it intercepts and shows the takeover banner non-destructively — the underlying session stays mounted but is dimmed and paused.
+- Agent runs are *paused, not cancelled*. On successful reauth, they resume from the last tool call.
+- The banner is **amber** (warning), not rose (error). Distinction matters: error means *something broke*; reauth means *we need a fresh handshake*.
+
+### Sign-out (screen 22)
+- Modal, not a navigation push. Vim-bar flips to `VOICE` color to signal "destructive".
+- "This device" → drop the local SecureStore row + revoke that refresh token server-side.
+- "All devices" (capital `X`) → revoke every refresh-token in the DB for this user. Fan-out push notifications so other devices flip to `unauthenticated` immediately.
+- Drafts are kept on the server; the next sign-in restores them.
+
+### Telemetry
+- Each auth flow gets a request id (`req_01HX…`) shown at the bottom of screens 18/19/20. Surface it in error reports — it's how support traces a failed handoff.
+
+---
+
+## 9 · Acceptance criteria
 
 You ship when:
 
-1. All 16 screens in `screens/*.png` are recognizable side-by-side with your implementation. Pixel-perfect not required; **silhouette + typography + spacing + color use must match.**
+1. All 23 screens in `screens/*.png` are recognizable side-by-side with your implementation. Pixel-perfect not required; **silhouette + typography + spacing + color use must match.**
 2. Hold-to-record voice works end-to-end (mic → transcript → agent turn).
-3. Plan → approve → run loop works against a real Claude Agent SDK session in at least one demo repo.
-4. Portrait↔landscape rotation transitions between single-pane and 3-pane layouts without losing session state.
-5. The app feels like a *terminal*, not a chatbot. Show it to a senior engineer and they should say "oh, neat" before they say "wait, this is on a phone?".
+3. Auth works against real Google + GitHub OAuth (and Apple on iOS) — token persists across cold starts, reauth banner fires on 401, sign-out actually revokes.
+4. Plan → approve → run loop works against a real Claude Agent SDK session in at least one demo repo.
+5. Portrait↔landscape rotation transitions between single-pane and 3-pane layouts without losing session state.
+6. The app feels like a *terminal*, not a chatbot. Show it to a senior engineer and they should say "oh, neat" before they say "wait, this is on a phone?".
 
 ---
 
-## 9 · Stretch (only after #8)
+## 10 · Stretch (only after #9)
 
 - **Voice replay** — tap any user turn's `voice · 0:12` chip to scrub the audio.
 - **Branch picker** — long-press the branch name in `TermAppBar` to switch.
@@ -186,7 +245,7 @@ You ship when:
 
 ---
 
-## 10 · Hand-off questions to surface back
+## 11 · Hand-off questions to surface back
 
 If anything below is unclear from this packet, ask the user before building:
 
