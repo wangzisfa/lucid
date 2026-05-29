@@ -28,6 +28,7 @@ android/build
 android/local.properties
 *.keystore
 !debug.keystore
+!android/app/lucid-release.keystore
 # ios
 ios/Pods
 ios/build

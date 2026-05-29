@@ -1,16 +1,23 @@
 name: Android APK
 
 # Builds an installable Android APK in the cloud (the sandbox can't reach
-# Google's Android repos). Produces a release-type APK signed with the debug
-# keystore, so it bundles the JS and runs standalone (no Metro needed), and is
-# installable on any device. Built with the old architecture
-# (-PnewArchEnabled=false) so no NDK is required — faster and more reliable.
+# Google's Android repos). Produces a release-type APK signed with the
+# committed release keystore, so it bundles the JS and runs standalone (no Metro
+# needed) and is installable / upgrade-installable on any device. Built with the
+# old architecture (-PnewArchEnabled=false) so no NDK is required.
+#
+# Triggers:
+#   - push to the dev branch  -> rolling `android-build` PRERELEASE (latest WIP)
+#   - push of a `v*` tag      -> proper versioned, non-prerelease RELEASE
+#   - manual (workflow_dispatch)
 
 on:
   workflow_dispatch:
   push:
     branches:
       - claude/amazing-davinci-4f1Hy
+    tags:
+      - 'v*'
     paths-ignore:
       - '**.md'
 
@@ -50,35 +57,50 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleRelease -PnewArchEnabled=false --no-daemon --stacktrace
 
-      - name: Rename APK
+      - name: Stage APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk dist/lucid-terminal-debug.apk
+          cp android/app/build/outputs/apk/release/app-release.apk dist/lucid-terminal.apk
           ls -lh dist
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: lucid-terminal-apk
-          path: dist/lucid-terminal-debug.apk
+          path: dist/lucid-terminal.apk
           if-no-files-found: error
 
-      - name: Publish to Release
+      # Tag push -> proper versioned release (non-prerelease).
+      - name: Publish versioned Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Lucid Terminal ${{ github.ref_name }}
+          body: |
+            Release-signed Android APK for **${{ github.ref_name }}**.
+
+            - release build (JS bundled, runs without a Metro dev server)
+            - signed with the project's release keystore (self-signed demo key,
+              not a Play Store key) — installable after enabling "install unknown
+              apps" on your device
+            - old architecture (no NDK)
+
+            Download `lucid-terminal.apk` below. By default the app talks to a
+            local agent server (`10.0.2.2:3000` on an emulator); set
+            **Settings → providers → server url** to a reachable server to use it
+            on a real device.
+          prerelease: false
+          files: dist/lucid-terminal.apk
+
+      # Branch push -> rolling latest prerelease.
+      - name: Publish rolling prerelease
+        if: startsWith(github.ref, 'refs/heads/')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-build
-          name: Lucid Terminal — Android (debug-signed)
+          name: Lucid Terminal — Android (latest WIP)
           body: |
-            Installable Android APK built by CI from `claude/amazing-davinci-4f1Hy`.
-
-            - release build (JS bundled, runs without a Metro dev server)
-            - signed with the debug keystore — installable after enabling
-              "install unknown apps" on your device
-            - old architecture (no NDK)
-
-            Download `lucid-terminal-debug.apk` below. By default the app talks to
-            a local agent server (`10.0.2.2:3000` on an emulator); set
-            **Settings → providers → server url** to a reachable server to use it
-            on a real device.
+            Rolling pre-release APK built from the dev branch. For a stable build
+            see the latest versioned release.
           prerelease: true
-          files: dist/lucid-terminal-debug.apk
+          files: dist/lucid-terminal.apk

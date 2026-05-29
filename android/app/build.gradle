@@ -83,7 +83,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "0.1.0"
     }
     signingConfigs {
         debug {
@@ -92,15 +92,23 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            // Self-signed demo release key, committed so release builds are
+            // reproducible and upgrade-installable across CI runs. This is NOT a
+            // Play Store key — fine for sideloaded demo builds only. Credentials
+            // can be overridden via -P props (LUCID_RELEASE_STORE_PASSWORD, etc.).
+            storeFile file(project.findProperty('LUCID_RELEASE_STORE_FILE') ?: 'lucid-release.keystore')
+            storePassword project.findProperty('LUCID_RELEASE_STORE_PASSWORD') ?: 'lucidrelease'
+            keyAlias project.findProperty('LUCID_RELEASE_KEY_ALIAS') ?: 'lucid'
+            keyPassword project.findProperty('LUCID_RELEASE_KEY_PASSWORD') ?: 'lucidrelease'
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
