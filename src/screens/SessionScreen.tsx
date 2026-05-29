@@ -12,8 +12,12 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '@/components/Screen';
 import { TermAppBar } from '@/components/TermAppBar';
+import { HoldMic } from '@/components/HoldMic';
+import { ListeningOverlay } from '@/components/ListeningOverlay';
+import { LandSessionScreen } from './LandSessionScreen';
 import { colors, fonts } from '@/theme/tokens';
 import { useActiveSession, useSessions } from '@/lib/store';
+import { useOrientation } from '@/lib/useOrientation';
 import { toneColor, type AgentTurn, type Turn } from '@/lib/types';
 import type { RootStackParamList } from '@/navigation/RootStack';
 
@@ -22,10 +26,14 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Session'>;
 const PLAN_MARK = { done: '[/]', running: '[●]', pending: '[ ]' } as const;
 
 export function SessionScreen(_props: Props) {
+  const orientation = useOrientation();
   const session = useActiveSession();
   const submitTextTurn = useSessions((s) => s.submitTextTurn);
   const approveLatestPlan = useSessions((s) => s.approveLatestPlan);
   const [draft, setDraft] = useState('');
+
+  // Landscape unlocks the tmux-style 3-pane layout; both read the same session.
+  if (orientation === 'landscape') return <LandSessionScreen />;
 
   if (!session) {
     return (
@@ -39,6 +47,7 @@ export function SessionScreen(_props: Props) {
   }
 
   const awaitingApproval = session.state === 'PLAN';
+  const recording = session.state === 'REC';
 
   return (
     <Screen>
@@ -47,11 +56,14 @@ export function SessionScreen(_props: Props) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.feed}>
-          {session.turns.map((t) => (
-            <TurnView key={t.id} turn={t} />
-          ))}
-        </ScrollView>
+        <View style={styles.flex}>
+          <ScrollView contentContainerStyle={styles.feed}>
+            {session.turns.map((t) => (
+              <TurnView key={t.id} turn={t} />
+            ))}
+          </ScrollView>
+          {recording && <ListeningOverlay elapsed={session.recElapsed} interim={session.interim} />}
+        </View>
 
         {awaitingApproval && (
           <Pressable
@@ -75,6 +87,7 @@ export function SessionScreen(_props: Props) {
             }}
             returnKeyType="send"
           />
+          <HoldMic recording={recording} elapsed={session.recElapsed} />
         </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -85,7 +98,12 @@ function TurnView({ turn }: { turn: Turn }) {
   if (turn.kind === 'user') {
     return (
       <View style={styles.turn}>
-        <Text style={styles.userText}>{turn.voice ? '🎙 ' : '> '}{turn.text}</Text>
+        <Text style={styles.userText}>{'> '}{turn.text}</Text>
+        {turn.voice && (
+          <Text style={styles.voiceChip}>
+            voice{turn.duration ? ` · 0:${String(Math.round(turn.duration)).padStart(2, '0')}` : ''}
+          </Text>
+        )}
       </View>
     );
   }
@@ -127,6 +145,7 @@ const styles = StyleSheet.create({
   feed: { padding: 12, gap: 12 },
   turn: { gap: 3 },
   userText: { color: colors.textHi, fontFamily: fonts.monoFallback, fontSize: 13 },
+  voiceChip: { color: colors.cyan, fontFamily: fonts.monoFallback, fontSize: 9.5, marginTop: 1 },
   planItem: { color: colors.textMid, fontFamily: fonts.monoFallback, fontSize: 12.5, lineHeight: 19 },
   log: { color: colors.textMid, fontFamily: fonts.monoFallback, fontSize: 12, lineHeight: 18 },
   diff: { color: colors.textMid, fontFamily: fonts.monoFallback, fontSize: 12, marginTop: 2 },
@@ -141,11 +160,15 @@ const styles = StyleSheet.create({
   approvePressed: { backgroundColor: 'rgba(94,255,178,0.10)' },
   approveText: { color: colors.mint, fontFamily: fonts.monoFallback, fontSize: 13, letterSpacing: 0.8 },
   inputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.glassBorder,
     padding: 10,
   },
   input: {
+    flex: 1,
     color: colors.textHi,
     fontFamily: fonts.monoFallback,
     fontSize: 13,

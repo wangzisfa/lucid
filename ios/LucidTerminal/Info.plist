@@ -34,6 +34,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Lucid uses the microphone to capture your voice turns.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Lucid transcribes your speech on-device to turn it into a coding turn.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
