@@ -5,6 +5,7 @@ import { Screen } from '@/components/Screen';
 import { TermAppBar } from '@/components/TermAppBar';
 import { VimBar } from '@/components/form/VimBar';
 import { colors, fonts } from '@/theme/tokens';
+import { useAuth } from '@/lib/auth-store';
 import type { RootStackParamList } from '@/navigation/RootStack';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Account'>;
@@ -30,7 +31,12 @@ const PROVIDERS: ProviderRow[] = [
  * render of the design; it will become live once the auth flow (17–23) and a
  * real identity store land.
  */
-export function AccountScreen(_props: Props) {
+export function AccountScreen({ navigation }: Props) {
+  const identity = useAuth((s) => s.identity);
+  const name = identity?.name ?? 'Iris Chen';
+  const email = identity?.email ?? 'iris@hey.com';
+  const initials = identity?.initials ?? 'IR';
+
   return (
     <Screen>
       <TermAppBar title="~/settings/account" chip="CONF" />
@@ -40,10 +46,10 @@ export function AccountScreen(_props: Props) {
 
         {/* identity card */}
         <View style={styles.idCard}>
-          <View style={styles.avatar}><Text style={styles.avatarText}>IR</Text></View>
+          <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
           <View style={styles.idMeta}>
-            <Text style={styles.name}>Iris Chen</Text>
-            <Text style={styles.email}>iris@hey.com</Text>
+            <Text style={styles.name}>{name}</Text>
+            <Text style={styles.email}>{email}</Text>
             <Text style={styles.idSub}>
               <Text style={{ color: colors.mint }}>● pro</Text> · 142h used · since may '25
             </Text>
@@ -60,8 +66,8 @@ export function AccountScreen(_props: Props) {
           </View>
         ))}
 
-        {/* session box */}
-        <View style={styles.sessionBox}>
+        {/* session box — tap to simulate a token-expiry takeover */}
+        <Pressable style={styles.sessionBox} onPress={() => navigation.navigate('AuthReauth')}>
           {[
             ['session', 'sid_01HXG8KPQ'],
             ['opened', '12 may · iphone 15 pro'],
@@ -73,21 +79,21 @@ export function AccountScreen(_props: Props) {
               <Text style={styles.sessionVal}>· {v}</Text>
             </View>
           ))}
-        </View>
+        </Pressable>
 
         {/* danger */}
-        <DangerRow k="x" label="sign out · this device" />
-        <DangerRow k="X" label="sign out · all devices" />
+        <DangerRow k="x" label="sign out · this device" onPress={() => navigation.navigate('AuthSignout')} />
+        <DangerRow k="X" label="sign out · all devices" onPress={() => navigation.navigate('AuthSignout')} />
         <DangerRow k="!" label="delete account · 14d cool-down" muted />
       </ScrollView>
-      <VimBar mode="NORMAL" cmd=":w" hint="j/k · esc" />
+      <VimBar mode="NORMAL" cmd=":w" hint="x sign out · tap session = reauth" />
     </Screen>
   );
 }
 
-function DangerRow({ k, label, muted }: { k: string; label: string; muted?: boolean }) {
+function DangerRow({ k, label, muted, onPress }: { k: string; label: string; muted?: boolean; onPress?: () => void }) {
   return (
-    <Pressable style={styles.dangerRow}>
+    <Pressable style={styles.dangerRow} onPress={onPress} disabled={!onPress}>
       <Text style={styles.dangerKey}>{k}</Text>
       <Text style={[styles.dangerLabel, muted && { color: colors.textMid }]}>{label}</Text>
     </Pressable>

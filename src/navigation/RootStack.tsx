@@ -11,6 +11,13 @@ import { SettingsModel } from '@/screens/SettingsModel';
 import { SettingsProviders } from '@/screens/SettingsProviders';
 import { SettingsRaw } from '@/screens/SettingsRaw';
 import { AccountScreen } from '@/screens/AccountScreen';
+import { AuthLogin } from '@/screens/AuthLogin';
+import { AuthBridge } from '@/screens/AuthBridge';
+import { AuthSuccess } from '@/screens/AuthSuccess';
+import { AuthError } from '@/screens/AuthError';
+import { AuthSignout } from '@/screens/AuthSignout';
+import { AuthReauth } from '@/screens/AuthReauth';
+import type { AuthProvider } from '@/lib/auth-store';
 
 /**
  * Route table. Each route is a real native screen, so the platform owns the
@@ -33,6 +40,12 @@ export type RootStackParamList = {
   SettingsProviders: undefined;
   SettingsRaw: undefined;
   Account: undefined;
+  AuthLogin: undefined;
+  AuthBridge: { provider: AuthProvider };
+  AuthSuccess: { provider: AuthProvider };
+  AuthError: { provider: AuthProvider };
+  AuthSignout: undefined;
+  AuthReauth: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -63,6 +76,13 @@ export function RootStack() {
       <Stack.Screen name="SettingsProviders" component={SettingsProviders} />
       <Stack.Screen name="SettingsRaw" component={SettingsRaw} />
       <Stack.Screen name="Account" component={AccountScreen} />
+
+      <Stack.Screen name="AuthLogin" component={AuthLogin} options={{ animation: 'fade' }} />
+      <Stack.Screen name="AuthBridge" component={AuthBridge} options={{ gestureEnabled: false }} />
+      <Stack.Screen name="AuthSuccess" component={AuthSuccess} options={{ gestureEnabled: false, animation: 'fade' }} />
+      <Stack.Screen name="AuthError" component={AuthError} options={{ gestureEnabled: false }} />
+      <Stack.Screen name="AuthSignout" component={AuthSignout} options={{ presentation: 'transparentModal', animation: 'fade' }} />
+      <Stack.Screen name="AuthReauth" component={AuthReauth} options={{ presentation: 'transparentModal', animation: 'fade' }} />
     </Stack.Navigator>
   );
 }
