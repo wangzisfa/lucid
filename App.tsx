@@ -1,6 +1,5 @@
 import React from 'react';
-import { StatusBar } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { RootStack } from '@/navigation/RootStack';
@@ -14,6 +13,8 @@ import { colors } from '@/theme/tokens';
  * `@react-navigation/native-stack` renders platform navigators, so the Android
  * system back gesture (and Android 14 predictive back) + iOS swipe-back are
  * provided by the OS — there is no custom gesture code anywhere in the app.
+ * (native-stack gets its gestures from react-native-screens; it does not need
+ * react-native-gesture-handler, so that dependency isn't included.)
  *
  * Fullscreen / edge-to-edge: a translucent status bar over the dark canvas;
  * screens use `useSafeAreaInsets()` to stay clear of the real notch + home
@@ -21,7 +22,7 @@ import { colors } from '@/theme/tokens';
  */
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bgDeep }}>
+    <View style={{ flex: 1, backgroundColor: colors.bgDeep }}>
       <SafeAreaProvider>
         <StatusBar
           translucent
@@ -32,6 +33,6 @@ export default function App() {
           <RootStack />
         </NavigationContainer>
       </SafeAreaProvider>
-    </GestureHandlerRootView>
+    </View>
   );
 }
